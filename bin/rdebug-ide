@@ -5,8 +5,14 @@ require 'optparse'
 require "ostruct"
 if RUBY_VERSION < "1.9"
   require 'ruby-debug-ide'
+
+  # TODO: think about lazily loading xml_printer/json_printer
+  require 'ruby-debug/xml_printer'
+  require 'ruby-debug/json_printer'
 else
   require_relative '../lib/ruby-debug-ide'
+  require_relative '../lib/ruby-debug/xml_printer'
+  require_relative '../lib/ruby-debug/json_printer'
 end
 
 $stdout.sync=true
@@ -17,7 +23,8 @@ options = OpenStruct.new(
   'load_mode'   => false,
   'port'        => 1234,
   'stop'        => false,
-  'tracing'     => false
+  'tracing'     => false,
+  'printerClass'=> Debugger::XmlPrinter
 )
 
 opts = OptionParser.new do |opts|
@@ -33,6 +40,7 @@ EOB
   opts.on('--stop', 'stop when the script is loaded') {options.stop = true}
   opts.on("-x", "--trace", "turn on line tracing") {options.tracing = true}
   opts.on("-l", "--load-mode", "load mode (experimental)") {options.load_mode = true}
+  opts.on("-J", "--json", "class name for printing messages") {|s| options.printerClass = Debugger::JsonPrinter }
   opts.on("-d", "--debug", "Debug self - prints information for debugging ruby-debug itself") do
     Debugger.cli_debug = true
   end

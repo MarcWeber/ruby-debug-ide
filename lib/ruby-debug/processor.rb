@@ -9,9 +9,9 @@ end
 module Debugger
   
   class ControlCommandProcessor # :nodoc:
-    def initialize(interface)
+    def initialize(interface, printer)
       @interface = interface
-      @printer = XmlPrinter.new(@interface)
+      @printer = printer
     end
     
     def print(*args)

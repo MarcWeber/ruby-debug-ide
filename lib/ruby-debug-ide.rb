@@ -4,11 +4,9 @@ require "socket"
 require 'thread'
 require 'ruby-debug-base'
 if RUBY_VERSION < "1.9"
-  require 'ruby-debug/xml_printer'
   require 'ruby-debug/processor'
   require 'ruby-debug/event_processor'
 else
-  require_relative 'ruby-debug/xml_printer'
   require_relative 'ruby-debug/processor'
   require_relative 'ruby-debug/event_processor'
 end
@@ -101,13 +99,13 @@ module Debugger
       end
     end
 
-    def start_server(host = nil, port = 1234)
+    def start_server(host = nil, port = 1234, printerClass)
       start
-      start_control(host, port)
+      start_control(host, port, printerClass || "XmlPrinter")
     end
 
     def debug_program(options)
-      start_server(options.host, options.port)
+      start_server(options.host, options.port, options.printerClass)
 
       raise "Control thread did not start (#{@control_thread}}" unless @control_thread && @control_thread.alive?
       
@@ -133,7 +131,7 @@ module Debugger
       end
     end
     
-    def start_control(host, port)
+    def start_control(host, port, printerClass)
       return if @control_thread
       @control_thread = DebugThread.new do
         begin
@@ -145,8 +143,9 @@ module Debugger
           while (session = server.accept)
             begin
               interface = RemoteInterface.new(session)
-              @event_processor = EventProcessor.new(interface)
-              ControlCommandProcessor.new(interface).process_commands
+              printer = printerClass.new(interface)
+              @event_processor = EventProcessor.new(interface, printer)
+              ControlCommandProcessor.new(interface, printer).process_commands
             rescue StandardError, ScriptError => ex
               $stderr.printf "Exception in DebugThread loop: #{ex}\n"
               exit 1

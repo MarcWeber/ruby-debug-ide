@@ -9,8 +9,8 @@ end
    
      attr_accessor :line, :file, :context
     
-     def initialize(interface)
-       @printer = XmlPrinter.new(interface)
+     def initialize(interface, printer)
+       @printer = printer
        @line = nil
        @file = nil
        @last_breakpoint = nil
